@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:IsakChat.App.ViewModels"
+             xmlns:dtos="clr-namespace:IsakChat.Shared.Dtos;assembly=IsakChat.Shared"
+             x:Class="IsakChat.App.Views.DmListPage"
+             x:DataType="vm:DmListViewModel"
+             Title="Poruke">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Novi četa" Command="{Binding NewChatCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,*">
+
+        <ActivityIndicator Grid.Row="0" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Margin="0,10" />
+
+        <RefreshView Grid.Row="1" Command="{Binding LoadCommand}" IsRefreshing="{Binding IsBusy}">
+            <CollectionView ItemsSource="{Binding Conversations}" SelectionMode="None">
+
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="8" Padding="30">
+                        <Label Text="Nemaš još nijedan privatni četa." Style="{StaticResource MutedLabel}" HorizontalTextAlignment="Center" />
+                        <Button Text="Započni novi četa" Command="{Binding NewChatCommand}" />
+                    </VerticalStackLayout>
+                </CollectionView.EmptyView>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="dtos:ConversationDto">
+                        <Grid Padding="16,12" ColumnDefinitions="Auto,*">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenChatCommand}" CommandParameter="{Binding .}" />
+                            </Grid.GestureRecognizers>
+
+                            <Border Grid.Column="0" WidthRequest="44" HeightRequest="44" BackgroundColor="{StaticResource SurfaceAlt}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="22" />
+                                </Border.StrokeShape>
+                                <Label Text="{Binding DisplayName, Converter={StaticResource FirstLetterConverter}}" FontSize="18" TextColor="{StaticResource Primary}" HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
+
+                            <VerticalStackLayout Grid.Column="1" Margin="12,0,0,0" VerticalOptions="Center" Spacing="2">
+                                <Label Text="{Binding DisplayName}" FontAttributes="Bold" />
+                                <Label Text="{Binding LastMessagePreview}" Style="{StaticResource MutedLabel}" LineBreakMode="TailTruncation" MaxLines="1" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+
+</ContentPage>

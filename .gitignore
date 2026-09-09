@@ -1,0 +1,19 @@
+## .NET / Visual Studio
+bin/
+obj/
+*.user
+*.suo
+
+## Server runtime podaci
+## isakchat.db JE namerno u repo-u (force-added) - demo podaci (korisnici + poruke) za prezentaciju,
+## da ne treba ponovo da se seeduje na drugom racunaru. Ako lokalno testiras i baza se zaprlja
+## tvojim porukama, "git checkout -- src/IsakChat.Server/isakchat.db" vraca cist demo snapshot.
+src/IsakChat.Server/isakchat.db-*
+src/IsakChat.Server/wwwroot/uploads/*
+!src/IsakChat.Server/wwwroot/uploads/.gitkeep
+
+## MAUI klijent - lokalna kes baza (ako se ikad pojavi u repo folderu)
+*.db3
+
+## OS
+.DS_Store

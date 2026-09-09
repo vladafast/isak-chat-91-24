@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:IsakChat.App.Converters"
+             x:Class="IsakChat.App.Controls.MessageBubbleView">
+
+    <ContentView.Resources>
+        <converters:StringNotEmptyConverter x:Key="NotEmptyConverter" />
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        <converters:BoolToAlignmentConverter x:Key="AlignmentConverter" />
+    </ContentView.Resources>
+
+    <!-- Napomena za odbranu: ovo je "custom kontrola" - spolja se koristi kao obican element
+         (<controls:MessageBubbleView MessageText="{Binding Text}" IsMine="{Binding IsMine}" .../>),
+         a iznutra ima svoj XAML i svoje BindableProperty-je definisane u MessageBubbleView.xaml.cs -->
+    <VerticalStackLayout x:Name="LayoutRoot" Spacing="2"
+                          HorizontalOptions="{Binding IsMine, Converter={StaticResource AlignmentConverter}}">
+
+        <Label Text="{Binding SenderName}"
+               FontSize="12"
+               TextColor="{StaticResource TextMuted}"
+               Margin="10,0,10,0"
+               IsVisible="{Binding IsMine, Converter={StaticResource InvertedBoolConverter}}" />
+
+        <Border x:Name="Bubble" Padding="10,8" MaximumWidthRequest="280">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="14" />
+            </Border.StrokeShape>
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Stroke" Value="Transparent" />
+                    <Setter Property="BackgroundColor" Value="{StaticResource BubbleOtherBg}" />
+                    <Setter Property="Opacity" Value="1" />
+                    <!-- Trigeri: moja poruka (IsMine) menja boju balona; obrisana poruka (IsDeleted) je zatamnjena -->
+                    <Style.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsMine}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{StaticResource BubbleMineBg}" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsDeleted}" Value="True">
+                            <Setter Property="Opacity" Value="0.55" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <VerticalStackLayout Spacing="4">
+
+                <Border BackgroundColor="{StaticResource ReplyStripBg}"
+                        Padding="6,4"
+                        IsVisible="{Binding ReplyPreviewText, Converter={StaticResource NotEmptyConverter}}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <VerticalStackLayout Spacing="0">
+                        <Label Text="{Binding ReplySenderName}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Primary}" />
+                        <Label Text="{Binding ReplyPreviewText}" FontSize="11" LineBreakMode="TailTruncation" MaxLines="1" TextColor="{StaticResource BubbleText}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Image Source="{Binding ImageUrl}"
+                       Aspect="AspectFill"
+                       HeightRequest="180"
+                       WidthRequest="240"
+                       IsVisible="{Binding ImageUrl, Converter={StaticResource NotEmptyConverter}}">
+                    <Image.Clip>
+                        <RoundRectangleGeometry CornerRadius="10" Rect="0,0,240,180" />
+                    </Image.Clip>
+                </Image>
+
+                <Label Text="{Binding MessageText}"
+                       IsVisible="{Binding MessageText, Converter={StaticResource NotEmptyConverter}}">
+                    <Label.Style>
+                        <Style TargetType="Label">
+                            <Setter Property="TextColor" Value="{StaticResource BubbleText}" />
+                            <!-- Triger: obrisana poruka se prikazuje kurzivom i prigusenom bojom -->
+                            <Style.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsDeleted}" Value="True">
+                                    <Setter Property="FontAttributes" Value="Italic" />
+                                    <Setter Property="TextColor" Value="{StaticResource TextMuted}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Label.Style>
+                </Label>
+
+                <Label Text="{Binding TimeText}"
+                       FontSize="10"
+                       HorizontalOptions="End"
+                       Opacity="0.65"
+                       TextColor="{StaticResource BubbleText}" />
+            </VerticalStackLayout>
+        </Border>
+    </VerticalStackLayout>
+</ContentView>

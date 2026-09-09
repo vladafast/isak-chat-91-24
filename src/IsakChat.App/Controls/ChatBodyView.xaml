@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:IsakChat.App.ViewModels"
+             xmlns:controls="clr-namespace:IsakChat.App.Controls"
+             x:Class="IsakChat.App.Controls.ChatBodyView"
+             x:Name="Root">
+
+    <!-- Zajednicko telo ceta (lista poruka + traka za pisanje) - koristi ga i opsta soba i privatni cet,
+         obe stranice samo postave svoj konkretan ViewModel (PublicChatViewModel / DmChatViewModel) kao BindingContext. -->
+    <Grid RowDefinitions="*,Auto" RowSpacing="0">
+
+        <CollectionView x:Name="MessagesCollectionView"
+                         Grid.Row="0"
+                         ItemsSource="{Binding Messages}"
+                         SelectionMode="None"
+                         ItemsUpdatingScrollMode="KeepLastItemInView">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:MessageItemViewModel">
+                    <Grid Padding="4,3">
+                        <Grid.GestureRecognizers>
+                            <!-- Tap na poruku otvara meni: Odgovori / Obriši (Obriši samo za sopstvene poruke) -->
+                            <TapGestureRecognizer
+                                Command="{Binding Source={x:Reference Root}, Path=BindingContext.MessageTappedCommand}"
+                                CommandParameter="{Binding .}" />
+                        </Grid.GestureRecognizers>
+                        <controls:MessageBubbleView
+                            SenderName="{Binding SenderDisplayName}"
+                            MessageText="{Binding Text}"
+                            ImageUrl="{Binding FullImageUrl}"
+                            IsMine="{Binding IsMine}"
+                            TimeText="{Binding TimeText}"
+                            ReplySenderName="{Binding ReplySenderName}"
+                            ReplyPreviewText="{Binding ReplyPreviewText}"
+                            IsDeleted="{Binding IsDeleted}" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Label Grid.Row="0"
+               Text="Nema jos poruka. Napiši nešto! 🌱"
+               Style="{StaticResource MutedLabel}"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               IsVisible="{Binding Messages.Count, Converter={StaticResource IsZeroConverter}}" />
+
+        <VerticalStackLayout Grid.Row="1" BackgroundColor="{StaticResource Surface}" Padding="10,8" Spacing="6">
+
+            <!-- Traka "odgovaraš na..." - vidljiva samo dok je izabrana poruka za reply -->
+            <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsReplying}" BackgroundColor="{StaticResource SurfaceAlt}" Padding="8,6">
+                <VerticalStackLayout Grid.Column="0" Spacing="0">
+                    <Label Text="{Binding ReplyingToSenderName, StringFormat='Odgovaraš: {0}'}" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource Primary}" />
+                    <Label Text="{Binding ReplyingToPreviewText}" FontSize="12" LineBreakMode="TailTruncation" MaxLines="1" Style="{StaticResource MutedLabel}" />
+                </VerticalStackLayout>
+                <Button Grid.Column="1" Text="✕" Style="{StaticResource IconButton}" WidthRequest="32" HeightRequest="32" FontSize="14" Command="{Binding CancelReplyCommand}" />
+            </Grid>
+
+            <!-- Traka sa izabranom slikom pre slanja -->
+            <Grid ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding HasPendingImage}" BackgroundColor="{StaticResource SurfaceAlt}" Padding="8,6">
+                <Label Grid.Column="0" Text="🖼" FontSize="18" VerticalOptions="Center" />
+                <Label Grid.Column="1" Text="Slika spremna za slanje" Margin="8,0,0,0" VerticalOptions="Center" />
+                <Button Grid.Column="2" Text="✕" Style="{StaticResource IconButton}" WidthRequest="32" HeightRequest="32" FontSize="14" Command="{Binding ClearPendingImageCommand}" />
+            </Grid>
+
+            <Label Text="{Binding ErrorMessage}"
+                   Style="{StaticResource ErrorLabel}"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource NotEmptyConverter}}" />
+
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                <Button Grid.Column="0" Text="📎" Style="{StaticResource IconButton}" Command="{Binding PickImageCommand}" />
+                <Entry Grid.Column="1" Placeholder="Poruka..." Text="{Binding DraftText}" ReturnCommand="{Binding SendCommand}" />
+                <Button Grid.Column="2" Text="➤" Style="{StaticResource IconButton}" Command="{Binding SendCommand}" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </Grid>
+</ContentView>

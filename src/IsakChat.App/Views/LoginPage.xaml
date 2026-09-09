@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:IsakChat.App.ViewModels"
+             x:Class="IsakChat.App.Views.LoginPage"
+             x:DataType="vm:LoginViewModel"
+             Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30,0" Spacing="16" VerticalOptions="Center">
+
+            <Label Text="QuickChat" Style="{StaticResource TitleLabel}" HorizontalOptions="Center" />
+            <Label Text="Uloguj se" Style="{StaticResource MutedLabel}" HorizontalOptions="Center" />
+
+            <Entry Placeholder="Korisničko ime" Text="{Binding Username}" Margin="0,20,0,0" />
+            <Entry Placeholder="Lozinka" Text="{Binding Password}" IsPassword="True" />
+
+            <Entry Placeholder="Adresa servera (npr. http://localhost:5203)"
+                   Text="{Binding ServerUrl}"
+                   FontSize="12" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   Style="{StaticResource ErrorLabel}"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource NotEmptyConverter}}"
+                   HorizontalTextAlignment="Center" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+
+            <Button Text="Prijavi se" Command="{Binding LoginCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+            <Button Text="Nemaš nalog? Registruj se" Style="{StaticResource SecondaryButton}" Command="{Binding GoToRegisterCommand}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

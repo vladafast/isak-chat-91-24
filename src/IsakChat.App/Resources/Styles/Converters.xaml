@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                     xmlns:converters="clr-namespace:IsakChat.App.Converters">
+
+    <!-- Globalno dostupni konverteri - koriste ih sve stranice preko StaticResource -->
+    <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+    <converters:BoolToAlignmentConverter x:Key="AlignmentConverter" />
+    <converters:StringNotEmptyConverter x:Key="NotEmptyConverter" />
+    <converters:IsZeroConverter x:Key="IsZeroConverter" />
+    <converters:FirstLetterConverter x:Key="FirstLetterConverter" />
+
+</ResourceDictionary>
