@@ -2,7 +2,6 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:IsakChat.App.ViewModels"
-             xmlns:dtos="clr-namespace:IsakChat.Shared.Dtos;assembly=IsakChat.Shared"
              x:Class="IsakChat.App.Views.NewDmPage"
              x:DataType="vm:NewDmViewModel"
              Title="Novi četa">
@@ -16,7 +15,7 @@
             </CollectionView.EmptyView>
 
             <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="dtos:UserDto">
+                <DataTemplate x:DataType="vm:NewDmUserItem">
                     <Grid Padding="16,12" ColumnDefinitions="Auto,*">
                         <Grid.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectUserCommand}" CommandParameter="{Binding .}" />
@@ -29,7 +28,10 @@
                             <Label Text="{Binding DisplayName, Converter={StaticResource FirstLetterConverter}}" FontSize="16" TextColor="{StaticResource Primary}" HorizontalOptions="Center" VerticalOptions="Center" />
                         </Border>
 
-                        <Label Grid.Column="1" Text="{Binding DisplayName}" Margin="12,0,0,0" VerticalOptions="Center" />
+                        <VerticalStackLayout Grid.Column="1" Margin="12,0,0,0" VerticalOptions="Center" Spacing="1">
+                            <Label Text="{Binding DisplayName}" />
+                            <Label Text="✓ Već ćaskate" FontSize="11" TextColor="{StaticResource TextMuted}" IsVisible="{Binding AlreadyChatting}" />
+                        </VerticalStackLayout>
                     </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>

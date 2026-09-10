@@ -7,6 +7,10 @@
              x:DataType="vm:DmChatViewModel"
              Title="{Binding OtherUserName}">
 
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Izvezi" Command="{Binding ExportCommand}" />
+    </ContentPage.ToolbarItems>
+
     <controls:ChatBodyView />
 
 </ContentPage>

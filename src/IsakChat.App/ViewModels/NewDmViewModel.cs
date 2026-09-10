@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.Input;
 using IsakChat.App.Services;
-using IsakChat.Shared.Dtos;
 
 namespace IsakChat.App.ViewModels;
 
@@ -10,7 +9,7 @@ public partial class NewDmViewModel : ViewModelBase
 {
     private readonly ApiClient _api;
 
-    public ObservableCollection<UserDto> Users { get; } = new();
+    public ObservableCollection<NewDmUserItem> Users { get; } = new();
 
     public NewDmViewModel(ApiClient api)
     {
@@ -24,10 +23,18 @@ public partial class NewDmViewModel : ViewModelBase
         ErrorMessage = null;
         try
         {
-            var users = await _api.GetUsersAsync();
+            // Korisnici i postojeci cetovi su nezavisni pozivi ka serveru - ucitavamo ih
+            // PARALELNO (Task.WhenAll) umesto redom, jedan ne zavisi od drugog pa nema
+            // razloga da cekamo prvi da se zavrsi pre nego sto krene drugi.
+            var usersTask = _api.GetUsersAsync();
+            var conversationsTask = _api.GetConversationsAsync();
+            await Task.WhenAll(usersTask, conversationsTask);
+
+            var vecCetujemSa = conversationsTask.Result.Select(c => c.UserId).ToHashSet();
+
             Users.Clear();
-            foreach (var u in users)
-                Users.Add(u);
+            foreach (var u in usersTask.Result)
+                Users.Add(NewDmUserItem.From(u, vecCetujemSa.Contains(u.Id)));
         }
         catch (ApiException ex)
         {
@@ -40,7 +47,7 @@ public partial class NewDmViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task SelectUserAsync(UserDto user)
+    private async Task SelectUserAsync(NewDmUserItem user)
     {
         // Vraca se preko trenutne (newdm) stranice pravo u cet, da Nazad iz ceta vodi na listu poruka
         await Shell.Current.GoToAsync($"../dmchat?userId={user.Id}&userName={Uri.EscapeDataString(user.DisplayName)}");
