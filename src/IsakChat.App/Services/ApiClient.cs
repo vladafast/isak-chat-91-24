@@ -27,15 +27,17 @@ public class ApiClient
 
     public async Task<AuthResponse> RegisterAsync(string username, string password, string displayName)
     {
-        var response = await _http.PostAsJsonAsync($"{BaseUrl}/api/auth/register",
-            new RegisterRequest { Username = username, Password = password, DisplayName = displayName });
+        var request = NewRequest(HttpMethod.Post, "/api/auth/register");
+        request.Content = JsonContent.Create(new RegisterRequest { Username = username, Password = password, DisplayName = displayName });
+        var response = await SendAsync(request);
         return await ReadOrThrowAsync<AuthResponse>(response, "Registracija nije uspela.");
     }
 
     public async Task<AuthResponse> LoginAsync(string username, string password)
     {
-        var response = await _http.PostAsJsonAsync($"{BaseUrl}/api/auth/login",
-            new LoginRequest { Username = username, Password = password });
+        var request = NewRequest(HttpMethod.Post, "/api/auth/login");
+        request.Content = JsonContent.Create(new LoginRequest { Username = username, Password = password });
+        var response = await SendAsync(request);
         return await ReadOrThrowAsync<AuthResponse>(response, "Pogresno korisnicko ime ili lozinka.");
     }
 
@@ -55,28 +57,28 @@ public class ApiClient
     public async Task<List<UserDto>> GetUsersAsync()
     {
         var request = NewRequest(HttpMethod.Get, "/api/users");
-        var response = await _http.SendAsync(request);
+        var response = await SendAsync(request);
         return await ReadOrThrowAsync<List<UserDto>>(response, "Ne mogu da ucitam korisnike.");
     }
 
     public async Task<List<ConversationDto>> GetConversationsAsync()
     {
         var request = NewRequest(HttpMethod.Get, "/api/conversations");
-        var response = await _http.SendAsync(request);
+        var response = await SendAsync(request);
         return await ReadOrThrowAsync<List<ConversationDto>>(response, "Ne mogu da ucitam poruke.");
     }
 
     public async Task<List<MessageDto>> GetPublicMessagesAsync(int afterId)
     {
         var request = NewRequest(HttpMethod.Get, $"/api/messages/public?afterId={afterId}");
-        var response = await _http.SendAsync(request);
+        var response = await SendAsync(request);
         return await ReadOrThrowAsync<List<MessageDto>>(response, "Ne mogu da ucitam poruke.");
     }
 
     public async Task<List<MessageDto>> GetPrivateMessagesAsync(int otherUserId, int afterId)
     {
         var request = NewRequest(HttpMethod.Get, $"/api/messages/private/{otherUserId}?afterId={afterId}");
-        var response = await _http.SendAsync(request);
+        var response = await SendAsync(request);
         return await ReadOrThrowAsync<List<MessageDto>>(response, "Ne mogu da ucitam poruke.");
     }
 
@@ -102,14 +104,14 @@ public class ApiClient
 
         var request = NewRequest(HttpMethod.Post, "/api/messages");
         request.Content = content;
-        var response = await _http.SendAsync(request);
+        var response = await SendAsync(request);
         return await ReadOrThrowAsync<MessageDto>(response, "Slanje poruke nije uspelo.");
     }
 
     public async Task DeleteMessageAsync(int messageId)
     {
         var request = NewRequest(HttpMethod.Delete, $"/api/messages/{messageId}");
-        var response = await _http.SendAsync(request);
+        var response = await SendAsync(request);
 
         if (response.IsSuccessStatusCode) return;
 
@@ -118,6 +120,25 @@ public class ApiClient
 
         var body = await SafeReadStringAsync(response);
         throw new ApiException(string.IsNullOrWhiteSpace(body) ? "Brisanje poruke nije uspelo." : body);
+    }
+
+    // Svi zahtevi prolaze kroz ovo mesto - hvata mrezne greske (server ugasen, nema konekcije,
+    // pogresna adresa...) i pretvara ih u ApiException. Bez ovoga bi svaka mrezna greska
+    // (HttpRequestException) prosla neuhvacena kroz ViewModel-e i srusila celu aplikaciju.
+    private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request)
+    {
+        try
+        {
+            return await _http.SendAsync(request);
+        }
+        catch (ApiException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new ApiException($"Ne mogu da se povezem sa serverom ({BaseUrl}). Proveri da li server radi i da li je adresa tacna.\n({ex.GetType().Name}: {ex.Message})");
+        }
     }
 
     private static async Task<T> ReadOrThrowAsync<T>(HttpResponseMessage response, string fallbackMessage)
