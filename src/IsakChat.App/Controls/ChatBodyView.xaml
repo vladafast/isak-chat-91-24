@@ -74,5 +74,68 @@
             </Grid>
 
         </VerticalStackLayout>
+
+        <!-- Nas sopstveni (temirani) popup - zamena za native DisplayAlert/DisplayActionSheet.
+             Prekriva ceo ChatBodyView (obe redi Grid-a), vidljiv samo dok je IsPopupOpen true. -->
+        <Grid Grid.Row="0" Grid.RowSpan="2" IsVisible="{Binding IsPopupOpen}" BackgroundColor="#B3000000">
+            <Grid.GestureRecognizers>
+                <!-- tap van kartice = otkazi popup -->
+                <TapGestureRecognizer Command="{Binding PopupDismissCommand}" />
+            </Grid.GestureRecognizers>
+
+            <Border BackgroundColor="{StaticResource Surface}"
+                    Stroke="{StaticResource Border}"
+                    StrokeThickness="1"
+                    Padding="20,18"
+                    MaximumWidthRequest="360"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    Margin="30">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="16" />
+                </Border.StrokeShape>
+                <Border.GestureRecognizers>
+                    <!-- prazan tap-catcher - klik UNUTAR kartice ne sme da propagira do scrim-a iza nje -->
+                    <TapGestureRecognizer />
+                </Border.GestureRecognizers>
+
+                <VerticalStackLayout Spacing="14">
+                    <Label Text="{Binding PopupTitle}" FontSize="17" FontAttributes="Bold" TextColor="{StaticResource TextPrimary}" />
+                    <Label Text="{Binding PopupMessage}"
+                           Style="{StaticResource MutedLabel}"
+                           FontSize="14"
+                           IsVisible="{Binding PopupMessage, Converter={StaticResource NotEmptyConverter}}" />
+
+                    <CollectionView ItemsSource="{Binding PopupOptions}" SelectionMode="None">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:PopupOption">
+                                <Button Text="{Binding Text}"
+                                        Command="{Binding Source={x:Reference Root}, Path=BindingContext.PopupOptionSelectedCommand}"
+                                        CommandParameter="{Binding .}">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                            <Setter Property="TextColor" Value="{StaticResource Black}" />
+                                            <Setter Property="FontAttributes" Value="Bold" />
+                                            <Setter Property="CornerRadius" Value="10" />
+                                            <Setter Property="Padding" Value="14,10" />
+                                            <Style.Triggers>
+                                                <DataTrigger TargetType="Button" Binding="{Binding IsDestructive}" Value="True">
+                                                    <Setter Property="BackgroundColor" Value="{StaticResource Danger}" />
+                                                    <Setter Property="TextColor" Value="{StaticResource White}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
     </Grid>
 </ContentView>

@@ -37,6 +37,21 @@ public abstract partial class ChatViewModelBase : ViewModelBase
 
     private int? _replyingToId;
 
+    // Nas sopstveni (temirani) popup - zamena za native DisplayAlert/DisplayActionSheet koji
+    // ne prati boje app-a nego izgled telefona. Vidi overlay u Controls/ChatBodyView.xaml.
+    [ObservableProperty]
+    private bool isPopupOpen;
+
+    [ObservableProperty]
+    private string popupTitle = string.Empty;
+
+    [ObservableProperty]
+    private string? popupMessage;
+
+    public ObservableCollection<PopupOption> PopupOptions { get; } = new();
+
+    private TaskCompletionSource<string?>? _popupTcs;
+
     protected abstract string ConversationKey { get; }
     protected abstract int? RecipientId { get; }
 
@@ -126,6 +141,35 @@ public abstract partial class ChatViewModelBase : ViewModelBase
 
     protected abstract Task<List<MessageDto>> FetchNewAsync(int afterId);
 
+    // Prikaze nas custom popup (Controls/ChatBodyView.xaml overlay) i ceka da korisnik
+    // izabere neku od opcija (ili zatvori popup dodirom van kartice -> vraca null).
+    protected Task<string?> ShowPopupAsync(string title, string? message, string[] options, string? destructiveOption = null)
+    {
+        PopupTitle = title;
+        PopupMessage = message;
+        PopupOptions.Clear();
+        foreach (var o in options)
+            PopupOptions.Add(new PopupOption { Text = o, IsDestructive = o == destructiveOption });
+
+        IsPopupOpen = true;
+        _popupTcs = new TaskCompletionSource<string?>();
+        return _popupTcs.Task;
+    }
+
+    [RelayCommand]
+    private void PopupOptionSelected(PopupOption option)
+    {
+        IsPopupOpen = false;
+        _popupTcs?.TrySetResult(option.Text);
+    }
+
+    [RelayCommand]
+    private void PopupDismiss()
+    {
+        IsPopupOpen = false;
+        _popupTcs?.TrySetResult(null);
+    }
+
     // Tap na poruku - meni sa opcijama. "Obrisi poruku" se nudi samo za sopstvene poruke.
     [RelayCommand]
     private async Task MessageTappedAsync(MessageItemViewModel message)
@@ -136,7 +180,7 @@ public abstract partial class ChatViewModelBase : ViewModelBase
             ? new[] { "Odgovori", "Obriši poruku", "Otkaži" }
             : new[] { "Odgovori", "Otkaži" };
 
-        var choice = await (Shell.Current?.DisplayActionSheet("Poruka", "Otkaži", null, options) ?? Task.FromResult("Otkaži"));
+        var choice = await ShowPopupAsync("Poruka", null, options, destructiveOption: "Obriši poruku");
 
         switch (choice)
         {
@@ -159,10 +203,10 @@ public abstract partial class ChatViewModelBase : ViewModelBase
 
     private async Task DeleteMessageAsync(MessageItemViewModel message)
     {
-        var confirmed = await (Shell.Current?.DisplayAlert(
-            "Brisanje poruke", "Da li sigurno želiš da obrišeš ovu poruku?", "Obriši", "Otkaži")
-            ?? Task.FromResult(false));
-        if (!confirmed) return;
+        var choice = await ShowPopupAsync(
+            "Brisanje poruke", "Da li sigurno želiš da obrišeš ovu poruku?",
+            new[] { "Obriši", "Otkaži" }, destructiveOption: "Obriši");
+        if (choice != "Obriši") return;
 
         try
         {
@@ -195,10 +239,10 @@ public abstract partial class ChatViewModelBase : ViewModelBase
         try
         {
             var options = MediaPicker.Default.IsCaptureSupported
-                ? new[] { "Iz galerije", "Kamera", "Otkazi" }
-                : new[] { "Iz galerije", "Otkazi" };
+                ? new[] { "Iz galerije", "Kamera", "Otkaži" }
+                : new[] { "Iz galerije", "Otkaži" };
 
-            var choice = await (Shell.Current?.DisplayActionSheet("Dodaj sliku", "Otkazi", null, options) ?? Task.FromResult("Otkazi"));
+            var choice = await ShowPopupAsync("Dodaj sliku", null, options);
 
             FileResult? result = choice switch
             {

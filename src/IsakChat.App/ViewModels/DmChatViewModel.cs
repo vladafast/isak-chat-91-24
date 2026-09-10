@@ -33,7 +33,7 @@ public partial class DmChatViewModel : ChatViewModelBase
     {
         if (Messages.Count == 0)
         {
-            await (Shell.Current?.DisplayAlert("Izvoz razgovora", "Nema poruka za izvoz.", "OK") ?? Task.CompletedTask);
+            await ShowPopupAsync("Izvoz razgovora", "Nema poruka za izvoz.", new[] { "OK" });
             return;
         }
 
@@ -66,7 +66,7 @@ public partial class DmChatViewModel : ChatViewModelBase
 
             await File.WriteAllTextAsync(fullPath, sb.ToString());
 
-            await (Shell.Current?.DisplayAlert("Izvoz razgovora", $"Sačuvano u:\n{fullPath}", "OK") ?? Task.CompletedTask);
+            await ShowPopupAsync("Izvoz razgovora", $"Sačuvano u:\n{fullPath}", new[] { "OK" });
         }
         catch (Exception ex)
         {
